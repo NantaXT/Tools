@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XTMODEPRO - CLOUD TERMINAL</title>
+    <style>
+        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; }
+        .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10; display: flex; justify-content: center; align-items: center; }
+        .terminal-box { border: 2px solid #00ff00; padding: 20px; width: 90%; max-width: 450px; box-shadow: 0 0 20px #00ff00; background: #000; text-align: center; }
+        .menu-btn { width: 100%; background: #000; border: 1px solid #00ff00; color: #00ff00; padding: 15px; margin: 10px 0; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .menu-btn:hover { background: #00ff00; color: #000; }
+        input { width: 100%; background: #111; border: 1px solid #00ff00; color: #fff; padding: 12px; margin: 10px 0; box-sizing: border-box; outline: none; }
+        #executor-frame { width: 100%; height: 100vh; border: none; display: none; }
+        .hidden { display: none; }
+        .loading-text { font-size: 12px; margin-top: 10px; color: yellow; }
+    </style>
+</head>
+<body>
+
+<div id="overlay" class="ui-overlay">
+    <div class="terminal-box">
+        <h2 style="margin-top:0;">XTMODEPRO EXECUTOR</h2>
+        
+        <div id="main-menu">
+            <button class="menu-btn" onclick="openFileHandler('sh')">[1] EXECUTE BASH (.sh)</button>
+            <button class="menu-btn" onclick="openFileHandler('py')">[2] EXECUTE PYTHON (.py)</button>
+            <button class="menu-btn" onclick="showGitInput()">[3] GIT CLONE INSTALLER</button>
+        </div>
+
+        <div id="git-input" class="hidden">
+            <input type="text" id="repo-url" placeholder="https://github.com/user/repo">
+            <button class="menu-btn" onclick="runCloud('git')">LAUNCH CLOUD CLONE</button>
+            <button class="menu-btn" style="border-color:red; color:red;" onclick="backHome()">CANCEL</button>
+        </div>
+
+        <input type="file" id="file-picker" class="hidden" onchange="runCloud('file')">
+        <div id="status" class="loading-text">Ready to Connect...</div>
+    </div>
+</div>
+
+<iframe id="executor-frame" src=""></iframe>
+
+<script>
+    const overlay = document.getElementById('overlay');
+    const frame = document.getElementById('executor-frame');
+    const status = document.getElementById('status');
+
+    function openFileHandler(ext) {
+        const picker = document.getElementById('file-picker');
+        picker.accept = "." + ext;
+        picker.click();
+    }
+
+    function showGitInput() {
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('git-input').classList.remove('hidden');
+    }
+
+    function backHome() {
+        document.getElementById('main-menu').classList.remove('hidden');
+        document.getElementById('git-input').classList.add('hidden');
+    }
+
+    function runCloud(type) {
+        status.innerHTML = "Connecting to Google Cloud Shell Engine...";
+        
+        let targetUrl = "";
+        if(type === 'git') {
+            const gitUrl = document.getElementById('repo-url').value;
+            if(!gitUrl) return alert("Link Kosong!");
+            // MENGAMBIL KEKUATAN GOOGLE CLOUD SHELL
+            targetUrl = "https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=" + encodeURIComponent(gitUrl);
+        } else {
+            // UNTUK FILE LOKAL: Mengarahkan ke Web Terminal Compiler
+            targetUrl = "https://www.tutorialspoint.com/execute_python_online.php"; 
+        }
+
+        setTimeout(() => {
+            overlay.classList.add('hidden'); // Sembunyikan menu Abang
+            frame.src = targetUrl; // Tampilkan situs mesinnya
+            frame.style.display = "block";
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
