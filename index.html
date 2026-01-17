@@ -3,84 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XTMODEPRO - CLOUD TERMINAL</title>
+    <title>XTMODEPRO - CLOUD EXECUTOR</title>
     <style>
-        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; }
-        .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10; display: flex; justify-content: center; align-items: center; }
-        .terminal-box { border: 2px solid #00ff00; padding: 20px; width: 90%; max-width: 450px; box-shadow: 0 0 20px #00ff00; background: #000; text-align: center; }
-        .menu-btn { width: 100%; background: #000; border: 1px solid #00ff00; color: #00ff00; padding: 15px; margin: 10px 0; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .menu-btn:hover { background: #00ff00; color: #000; }
-        input { width: 100%; background: #111; border: 1px solid #00ff00; color: #fff; padding: 12px; margin: 10px 0; box-sizing: border-box; outline: none; }
-        #executor-frame { width: 100%; height: 100vh; border: none; display: none; }
-        .hidden { display: none; }
-        .loading-text { font-size: 12px; margin-top: 10px; color: yellow; }
+        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .terminal-box { border: 2px solid #00ff00; width: 100%; max-width: 450px; padding: 25px; box-shadow: 0 0 20px #00ff00; border-radius: 8px; background: rgba(0,0,0,0.9); text-align: center; }
+        input { width: 100%; background: #111; border: 1px solid #00ff00; color: #fff; padding: 15px; margin: 20px 0; box-sizing: border-box; outline: none; border-radius: 5px; font-size: 14px; }
+        .btn-run { width: 100%; background: #00ff00; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-run:hover { background: #fff; box-shadow: 0 0 20px #fff; }
+        .footer { margin-top: 15px; font-size: 10px; color: #555; }
+        #status { font-size: 11px; margin-top: 10px; color: yellow; min-height: 20px; }
     </style>
 </head>
 <body>
 
-<div id="overlay" class="ui-overlay">
-    <div class="terminal-box">
-        <h2 style="margin-top:0;">XTMODEPRO EXECUTOR</h2>
-        
-        <div id="main-menu">
-            <button class="menu-btn" onclick="openFileHandler('sh')">[1] EXECUTE BASH (.sh)</button>
-            <button class="menu-btn" onclick="openFileHandler('py')">[2] EXECUTE PYTHON (.py)</button>
-            <button class="menu-btn" onclick="showGitInput()">[3] GIT CLONE INSTALLER</button>
-        </div>
+<div class="terminal-box">
+    <h2 style="margin:0; font-size: 20px;">XTMODEPRO CLOUD</h2>
+    <p style="font-size: 12px; color: #00ff0088;">AUTOMATED TERMINAL EXECUTOR</p>
 
-        <div id="git-input" class="hidden">
-            <input type="text" id="repo-url" placeholder="https://github.com/user/repo">
-            <button class="menu-btn" onclick="runCloud('git')">LAUNCH CLOUD CLONE</button>
-            <button class="menu-btn" style="border-color:red; color:red;" onclick="backHome()">CANCEL</button>
-        </div>
-
-        <input type="file" id="file-picker" class="hidden" onchange="runCloud('file')">
-        <div id="status" class="loading-text">Ready to Connect...</div>
+    <div id="input-area">
+        <input type="text" id="repoUrl" placeholder="PASTE GITHUB LINK HERE...">
+        <button class="btn-run" onclick="launchTerminal()">LAUNCH SCRIPT</button>
     </div>
+
+    <div id="status">Ready to connect...</div>
+    <div class="footer">POWERED BY GOOGLE CLOUD ENGINE</div>
 </div>
 
-<iframe id="executor-frame" src=""></iframe>
-
 <script>
-    const overlay = document.getElementById('overlay');
-    const frame = document.getElementById('executor-frame');
-    const status = document.getElementById('status');
-
-    function openFileHandler(ext) {
-        const picker = document.getElementById('file-picker');
-        picker.accept = "." + ext;
-        picker.click();
-    }
-
-    function showGitInput() {
-        document.getElementById('main-menu').classList.add('hidden');
-        document.getElementById('git-input').classList.remove('hidden');
-    }
-
-    function backHome() {
-        document.getElementById('main-menu').classList.remove('hidden');
-        document.getElementById('git-input').classList.add('hidden');
-    }
-
-    function runCloud(type) {
-        status.innerHTML = "Connecting to Google Cloud Shell Engine...";
+    function launchTerminal() {
+        const url = document.getElementById('repoUrl').value;
+        const status = document.getElementById('status');
         
-        let targetUrl = "";
-        if(type === 'git') {
-            const gitUrl = document.getElementById('repo-url').value;
-            if(!gitUrl) return alert("Link Kosong!");
-            // MENGAMBIL KEKUATAN GOOGLE CLOUD SHELL
-            targetUrl = "https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=" + encodeURIComponent(gitUrl);
-        } else {
-            // UNTUK FILE LOKAL: Mengarahkan ke Web Terminal Compiler
-            targetUrl = "https://www.tutorialspoint.com/execute_python_online.php"; 
+        if (!url || !url.includes('github.com')) {
+            alert("Masukkan link GitHub yang valid, Bang!");
+            return;
         }
 
+        status.innerHTML = "[*] Booting Virtual Machine...<br>[*] Injecting Cloud Shell Parameters...";
+        
+        // LOGIKA INTI: Menggunakan URL Parameter Google Cloud Shell
+        // Ini akan otomatis melakukan git clone dan membuka terminal
+        const cloudShellUrl = "https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=" + encodeURIComponent(url);
+
         setTimeout(() => {
-            overlay.classList.add('hidden'); // Sembunyikan menu Abang
-            frame.src = targetUrl; // Tampilkan situs mesinnya
-            frame.style.display = "block";
-        }, 2000);
+            status.innerHTML = "[SUCCESS] Redirecting to Cloud Terminal...";
+            // Membuka terminal di tab baru agar situs Abang tetap terbuka
+            window.open(cloudShellUrl, '_blank');
+        }, 1500);
     }
 </script>
 
