@@ -4,51 +4,64 @@
     <title>TGMODS WEB VIP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { background: #0e1621; color: white; font-family: sans-serif; margin: 0; }
-        .header { background: #242f3d; padding: 15px; font-weight: bold; border-bottom: 2px solid #17212b; }
-        .chat-item { padding: 15px; border-bottom: 1px solid #17212b; cursor: pointer; display: flex; justify-content: space-between; }
-        .chat-item:hover { background: #17212b; }
-        .unread { background: #31a2f2; border-radius: 10px; padding: 2px 8px; font-size: 12px; }
-        .btn-spam { background: #e53935; color: white; border: none; padding: 10px; width: 100%; position: fixed; bottom: 0; }
+        body { background: #0e1621; color: white; font-family: sans-serif; padding: 10px; }
+        .box { background: #17212b; padding: 20px; border-radius: 10px; margin-bottom: 10px; }
+        input { width: 90%; padding: 10px; margin: 10px 0; background: #242f3d; color: white; border: 1px solid #31a2f2; }
+        button { background: #31a2f2; color: white; border: none; padding: 10px 20px; cursor: pointer; width: 100%; }
+        .chat-item { border-bottom: 1px solid #242f3d; padding: 10px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
-    <div class="header">☰ TGMODS VIP 👻</div>
-    <div id="content"><p style="text-align:center;margin-top:20px;">Menghubungkan ke Termux...</p></div>
+    <div id="login-section" class="box">
+        <h3>🔑 LOGIN TGMODS</h3>
+        <input type="text" id="phone" placeholder="+628xxx">
+        <button onclick="sendOTP()">KIRIM OTP</button>
+        <div id="otp-box" style="display:none">
+            <input type="text" id="otp" placeholder="Kode OTP">
+            <button onclick="verifyOTP()">VERIFIKASI</button>
+        </div>
+    </div>
+
+    <div id="chat-section" class="box" style="display:none">
+        <h3>☰ DAFTAR CHAT</h3>
+        <div id="chat-list">Memuat...</div>
+    </div>
 
     <script>
-        const API_URL = "http://localhost:5000"; // Koneksi ke server Termux
+        const API = "http://localhost:5000";
+
+        async function sendOTP() {
+            const res = await fetch(`${API}/send_otp`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: document.getElementById('phone').value})
+            });
+            alert( (await res.json()).status );
+            document.getElementById('otp-box').style.display = 'block';
+        }
+
+        async function verifyOTP() {
+            const res = await fetch(`${API}/verify_login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({otp: document.getElementById('otp').value})
+            });
+            const data = await res.json();
+            if(data.status === "success") {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('chat-section').style.display = 'block';
+                loadChats();
+            } else { alert("Gagal: " + data.msg); }
+        }
 
         async function loadChats() {
-            try {
-                const res = await fetch(`${API_URL}/get_chats`);
-                const chats = await res.json();
-                let html = "";
-                chats.forEach(c => {
-                    html += `<div class="chat-item" onclick="doSpam(${c.id}, '${c.name}')">
-                        <div><b>${c.name}</b><br><small style="color:#8b96a3">${c.last_msg}</small></div>
-                        <div>${c.unread > 0 ? `<span class="unread">${c.unread}</span>` : ''}</div>
-                    </div>`;
-                });
-                document.getElementById('content').innerHTML = html;
-            } catch (e) {
-                document.getElementById('content').innerHTML = "<p style='text-align:center;color:red;'>Gagal Konek! Pastikan Termux Jalan.</p>";
-            }
+            const res = await fetch(`${API}/get_chats`);
+            const chats = await res.json();
+            if(chats.status === "unauthorized") return;
+            document.getElementById('chat-list').innerHTML = chats.map(c => 
+                `<div class="chat-item"><span>${c.name}</span> <b>${c.unread}</b></div>`
+            ).join('');
         }
-
-        async function doSpam(id, name) {
-            let msg = prompt(`Pesan Spam ke ${name}:`, "Hacked by TGMODS");
-            let jml = prompt("Jumlah:", "10");
-            if (msg && jml) {
-                await fetch(`${API_URL}/spam`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id: id, text: msg, count: jml})
-                });
-                alert("Serangan Terkirim!");
-            }
-        }
-        setInterval(loadChats, 3000); // Auto-refresh tiap 3 detik
     </script>
 </body>
 </html>
