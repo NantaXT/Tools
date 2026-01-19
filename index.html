@@ -5,59 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { background: #0e1621; color: white; font-family: sans-serif; margin: 0; }
-        .header { background: #242f3d; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #17212b; }
-        .chat-card { padding: 15px; border-bottom: 1px solid #17212b; display: flex; justify-content: space-between; cursor: pointer; }
-        .chat-card:hover { background: #17212b; }
-        .name { font-weight: bold; color: #64b5f6; }
-        .msg { color: #8b96a3; font-size: 13px; margin-top: 5px; }
-        .unread { background: #31a2f2; color: white; border-radius: 10px; padding: 2px 8px; font-size: 12px; }
-        .btn-spam { background: #e53935; color: white; border: none; padding: 10px; width: 100%; position: fixed; bottom: 0; font-weight: bold; }
+        .header { background: #242f3d; padding: 15px; font-weight: bold; border-bottom: 2px solid #17212b; }
+        .chat-item { padding: 15px; border-bottom: 1px solid #17212b; cursor: pointer; display: flex; justify-content: space-between; }
+        .chat-item:hover { background: #17212b; }
+        .unread { background: #31a2f2; border-radius: 10px; padding: 2px 8px; font-size: 12px; }
+        .btn-spam { background: #e53935; color: white; border: none; padding: 10px; width: 100%; position: fixed; bottom: 0; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <span>☰ TGMODS VIP 👻</span>
-        <span>🔍</span>
-    </div>
-    
-    <div id="chat-container">
-        <p style="text-align: center;">Menghubungkan ke Telegram...</p>
-    </div>
+    <div class="header">☰ TGMODS VIP 👻</div>
+    <div id="content"><p style="text-align:center;margin-top:20px;">Menghubungkan ke Termux...</p></div>
 
     <script>
-        async function loadChats() {
-            const res = await fetch('/get_chats');
-            const data = await res.json();
-            const container = document.getElementById('chat-container');
-            container.innerHTML = '';
-            
-            data.forEach(chat => {
-                container.innerHTML += `
-                    <div class="chat-card" onclick="startSpam(${chat.id}, '${chat.name}')">
-                        <div>
-                            <div class="name">${chat.name} <span style="color:#4caf50">✓✓</span></div>
-                            <div class="msg">${chat.last_msg}</div>
-                        </div>
-                        <div>${chat.unread > 0 ? `<span class="unread">${chat.unread}</span>` : ''}</div>
-                    </div>
-                `;
-            });
-        }
+        const API_URL = "http://localhost:5000"; // Koneksi ke server Termux
 
-        async function startSpam(id, name) {
-            let text = prompt(`Kirim Spam ke ${name}:`, "Hacked by TGMODS");
-            let count = prompt("Jumlah:", "10");
-            if (text && count) {
-                alert("Spam Dimulai! Cek Termux untuk status.");
-                await fetch('/spam', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id: id, text: text, count: count})
+        async function loadChats() {
+            try {
+                const res = await fetch(`${API_URL}/get_chats`);
+                const chats = await res.json();
+                let html = "";
+                chats.forEach(c => {
+                    html += `<div class="chat-item" onclick="doSpam(${c.id}, '${c.name}')">
+                        <div><b>${c.name}</b><br><small style="color:#8b96a3">${c.last_msg}</small></div>
+                        <div>${c.unread > 0 ? `<span class="unread">${c.unread}</span>` : ''}</div>
+                    </div>`;
                 });
-                alert("Spam Selesai!");
+                document.getElementById('content').innerHTML = html;
+            } catch (e) {
+                document.getElementById('content').innerHTML = "<p style='text-align:center;color:red;'>Gagal Konek! Pastikan Termux Jalan.</p>";
             }
         }
-        loadChats();
+
+        async function doSpam(id, name) {
+            let msg = prompt(`Pesan Spam ke ${name}:`, "Hacked by TGMODS");
+            let jml = prompt("Jumlah:", "10");
+            if (msg && jml) {
+                await fetch(`${API_URL}/spam`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: id, text: msg, count: jml})
+                });
+                alert("Serangan Terkirim!");
+            }
+        }
+        setInterval(loadChats, 3000); // Auto-refresh tiap 3 detik
     </script>
 </body>
 </html>
