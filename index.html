@@ -1,89 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>TGMODS VIP CLOUD</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.jsdelivr.net/npm/gramjs/dist/gramjs.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XT-ULTRA-HYBRID | ELITE INTERFACE</title>
     <style>
-        body { background: #0e1621; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #17212b; padding: 20px; border-radius: 12px; border: 1px solid #31a2f2; max-width: 450px; margin: auto; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; background: #242f3d; color: white; border: 1px solid #333; border-radius: 8px; box-sizing: border-box; }
-        button { background: #31a2f2; color: white; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        .spam-box { display: none; margin-top: 20px; border-top: 1px solid #31a2f2; padding-top: 20px; }
-        #status { text-align: center; color: #f1c40f; margin: 10px 0; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background-color: #050505; color: #00ff41; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        
+        .terminal-container { width: 95%; max-width: 900px; height: 90vh; background: #000; border: 2px solid #00ff41; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0, 255, 65, 0.3); border-radius: 5px; }
+        
+        /* Header Terminal */
+        .terminal-header { background: #00ff41; color: #000; padding: 5px 15px; font-weight: bold; font-size: 12px; display: flex; justify-content: space-between; }
+        
+        #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+        
+        /* Message Style */
+        .message { padding: 12px 18px; max-width: 85%; font-size: 14px; position: relative; border: 1px solid transparent; }
+        .user { align-self: flex-end; background: rgba(0, 255, 65, 0.1); border-color: #00ff41; color: #fff; text-align: right; }
+        .ai { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border-left: 4px solid #00ff41; color: #00ff41; }
+        
+        /* Input Area */
+        .input-area { display: flex; padding: 15px; background: #0a0a0a; border-top: 2px solid #00ff41; }
+        input { flex: 1; padding: 12px; border: 1px solid #333; background: #000; color: #00ff41; outline: none; border-radius: 4px; font-family: inherit; }
+        input:focus { border-color: #00ff41; }
+        
+        .controls { display: flex; gap: 5px; margin-left: 10px; }
+        button { padding: 10px 15px; border: 1px solid #00ff41; background: transparent; color: #00ff41; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        button:hover { background: #00ff41; color: #000; box-shadow: 0 0 10px #00ff41; }
+        button:disabled { border-color: #555; color: #555; cursor: not-allowed; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #00ff41; }
     </style>
 </head>
 <body>
-    <div id="login-ui" class="card">
-        <h2>🔥 TGMODS VIP</h2>
-        <input type="text" id="api_id" placeholder="API ID" value="36645054">
-        <input type="text" id="api_hash" placeholder="API HASH" value="7ef85cb845a54c1e842cc67b4f127da9">
-        <input type="text" id="phone" placeholder="+628xxx" value="+6287719761698">
-        <button id="btn-otp" onclick="kirimOTP()">KIRIM KODE OTP</button>
-        <div id="otp-area" style="display:none">
-            <input type="text" id="otp" placeholder="Masukkan Kode">
-            <button onclick="masuk()">LOGIN SEKARANG</button>
+
+<div class="terminal-container">
+    <div class="terminal-header">
+        <span>XT-ULTRA-HYBRID ARCHITECT v1.0</span>
+        <span>STATUS: ONLINE</span>
+    </div>
+    
+    <div id="chat-box">
+        <div class="message ai">XT-ULTRA-HYBRID ONLINE. Awaiting target data (Script/XML/Bypass/Web).</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Type command..." autocomplete="off">
+        <div class="controls">
+            <button id="send-btn" onclick="executeCommand()">EXEC</button>
         </div>
-        <div id="status">Siap digunakan tanpa Termux.</div>
     </div>
+</div>
 
-    <div id="main-ui" class="card" style="display:none">
-        <h2>🛠️ PANEL SPAM</h2>
-        <input type="text" id="target" placeholder="Username Target (contoh: @nantaxt)">
-        <textarea id="pesan" placeholder="Isi pesan spam..."></textarea>
-        <input type="number" id="jumlah" placeholder="Jumlah (contoh: 50)">
-        <button onclick="mulaiSpam()">GAS SPAM!</button>
-        <div id="spam-status" style="margin-top:10px; color:#2ecc71"></div>
-    </div>
+<script>
+    // KONFIGURASI API
+    const API_KEY = "PASTE_API_KEY_ANDA_DISINI"; 
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
-    <script>
-        let client;
-        let pHash;
-        const { TelegramClient } = window.gramjs;
-        const { StringSession } = window.gramjs.sessions;
+    const SYSTEM_PROMPT = `[SYSTEM ROLE: XT-ULTRA-HYBRID ARCHITECT]
+    You are the "XT-ULTRA-HYBRID", an elite entity specialized in Mobile Reverse Engineering, Full-Stack Development, and Advanced Automation.
+    [CAPABILITY CORE]
+    1. GAMEGUARDIAN PRO: Create modular Lua scripts, Memory Patching (.so), Hex editing, and Anti-Crash mechanisms.
+    2. TERMUX SUPREMACY: Build pro-level scripts (Bash/Python/NodeJS).
+    3. XML & WEB DEV: Expert in Android XML and Full-Stack Web Development.
+    4. BYPASS SPECIALIST: Break Banned systems, Blacklists (BL), Antihack, and Signature Checks.
+    [OPERATIONAL PROTOCOLS]
+    - BYPASS LOGIC: Analyze "CheckSignature" methods and replace with "return-void".
+    - OUTPUT: Technical, minimalist, use ASCII Banners, include Error Handling.`;
 
-        async function kirimOTP() {
-            const apiId = parseInt(document.getElementById('api_id').value);
-            const apiHash = document.getElementById('api_hash').value;
-            const phone = document.getElementById('phone').value;
-            try {
-                document.getElementById('status').innerText = "Menghubungkan...";
-                client = new TelegramClient(new StringSession(""), apiId, apiHash, { connectionRetries: 5 });
-                await client.connect();
-                const res = await client.sendCode({ apiId, apiHash }, phone);
-                pHash = res.phoneCodeHash;
-                document.getElementById('otp-area').style.display = 'block';
-                document.getElementById('btn-otp').style.display = 'none';
-                document.getElementById('status').innerText = "Cek Kode di Telegram!";
-            } catch (e) { alert("Gagal: " + e.message); }
+    // SISTEM SUARA (TEXT-TO-SPEECH)
+    function speak(text) {
+        if (!window.speechSynthesis) return;
+        
+        window.speechSynthesis.cancel(); // Stop suara sebelumnya
+        const msg = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+
+        // Cari suara Laki-laki Indonesia yang natural (Google ID Male)
+        const maleVoice = voices.find(v => (v.name.includes('Indonesian') || v.lang === 'id-ID') && 
+                                           (v.name.toLowerCase().includes('male') || v.name.includes('Google')));
+        
+        msg.voice = maleVoice || voices[0];
+        msg.lang = 'id-ID';
+        msg.pitch = 0.85; // Lebih rendah agar terdengar maskulin/serius
+        msg.rate = 1.0;   // Kecepatan normal
+        
+        window.speechSynthesis.speak(msg);
+    }
+
+    // Pastikan suara termuat (beberapa browser butuh ini)
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+    // FUNGSI EKSEKUSI
+    async function executeCommand() {
+        const input = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+        const btn = document.getElementById('send-btn');
+        const userText = input.value.trim();
+
+        if (!userText) return;
+
+        addMessage('user', userText);
+        input.value = "";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\nUser: " + userText }] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
+                })
+            });
+
+            const data = await response.json();
+            const aiResponse = data.candidates[0].content.parts[0].text;
+            
+            addMessage('ai', aiResponse);
+            speak(aiResponse); // AI Berbicara
+
+        } catch (error) {
+            addMessage('ai', "[CRITICAL ERROR] Failed to access core logic.");
+        } finally {
+            btn.disabled = false;
         }
+    }
 
-        async function masuk() {
-            const code = document.getElementById('otp').value;
-            const phone = document.getElementById('phone').value;
-            const apiId = parseInt(document.getElementById('api_id').value);
-            const apiHash = document.getElementById('api_hash').value;
-            try {
-                await client.signInUser({ apiId, apiHash }, { phoneNumber: phone, phoneCodeHash: pHash, phoneCode: code });
-                document.getElementById('login-ui').style.display = 'none';
-                document.getElementById('main-ui').style.display = 'block';
-            } catch (e) { alert("Gagal Login: " + e.message); }
-        }
+    function addMessage(sender, text) {
+        const chatBox = document.getElementById('chat-box');
+        const div = document.createElement('div');
+        div.className = `message ${sender}`;
+        div.style.whiteSpace = "pre-wrap";
+        div.innerText = (sender === 'user' ? "C:\\USER> " : "") + text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-        async function mulaiSpam() {
-            const target = document.getElementById('target').value;
-            const pesan = document.getElementById('pesan').value;
-            const jumlah = parseInt(document.getElementById('jumlah').value);
-            const log = document.getElementById('spam-status');
+    document.getElementById('user-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') executeCommand();
+    });
+</script>
 
-            for (let i = 1; i <= jumlah; i++) {
-                try {
-                    await client.sendMessage(target, { message: pesan });
-                    log.innerText = `Mengirim: ${i}/${jumlah}`;
-                } catch (e) { log.innerText = "Error: " + e.message; break; }
-            }
-            log.innerText = "✅ SPAM SELESAI!";
-        }
-    </script>
 </body>
 </html>
