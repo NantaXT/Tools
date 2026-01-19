@@ -1,66 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TGMODS WEB VIP</title>
+    <title>TGMODS PURE WEB</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/gramjs/dist/gramjs.min.js"></script>
     <style>
-        body { background: #0e1621; color: white; font-family: sans-serif; padding: 10px; }
-        .box { background: #17212b; padding: 20px; border-radius: 10px; margin-bottom: 10px; }
-        input { width: 90%; padding: 10px; margin: 10px 0; background: #242f3d; color: white; border: 1px solid #31a2f2; }
-        button { background: #31a2f2; color: white; border: none; padding: 10px 20px; cursor: pointer; width: 100%; }
-        .chat-item { border-bottom: 1px solid #242f3d; padding: 10px; display: flex; justify-content: space-between; }
+        body { background: #0e1621; color: white; font-family: sans-serif; padding: 20px; }
+        .card { background: #17212b; padding: 20px; border-radius: 12px; border: 1px solid #31a2f2; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #242f3d; color: white; border: 1px solid #31a2f2; box-sizing: border-box; }
+        button { background: #31a2f2; color: white; border: none; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="login-section" class="box">
-        <h3>🔑 LOGIN TGMODS</h3>
+    <div id="login-form" class="card">
+        <h2>🔥 TGMODS CLOUD</h2>
+        <input type="text" id="api_id" placeholder="API ID (Cek di my.telegram.org)">
+        <input type="text" id="api_hash" placeholder="API HASH">
         <input type="text" id="phone" placeholder="+628xxx">
-        <button onclick="sendOTP()">KIRIM OTP</button>
-        <div id="otp-box" style="display:none">
-            <input type="text" id="otp" placeholder="Kode OTP">
-            <button onclick="verifyOTP()">VERIFIKASI</button>
+        <button onclick="startLogin()">MASUK KE CLOUD</button>
+        
+        <div id="otp-area" style="display:none">
+            <input type="text" id="code" placeholder="Kode OTP">
+            <button onclick="finishLogin()">KONFIRMASI</button>
         </div>
     </div>
 
-    <div id="chat-section" class="box" style="display:none">
-        <h3>☰ DAFTAR CHAT</h3>
-        <div id="chat-list">Memuat...</div>
+    <div id="chat-area" class="card" style="display:none">
+        <h3>✅ Berhasil Masuk!</h3>
+        <p>Sekarang situs ini terhubung langsung ke Telegram tanpa Termux.</p>
+        <div id="list-chats"></div>
     </div>
 
     <script>
-        const API = "http://localhost:5000";
+        let client;
+        let phoneCodeHash;
 
-        async function sendOTP() {
-            const res = await fetch(`${API}/send_otp`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({phone: document.getElementById('phone').value})
+        async function startLogin() {
+            const apiId = parseInt(document.getElementById('api_id').value);
+            const apiHash = document.getElementById('api_hash').value;
+            const phoneNumber = document.getElementById('phone').value;
+
+            client = new window.gramjs.TelegramClient(new window.gramjs.sessions.StringSession(""), apiId, apiHash, {
+                connectionRetries: 5,
             });
-            alert( (await res.json()).status );
-            document.getElementById('otp-box').style.display = 'block';
+
+            await client.connect();
+            const result = await client.sendCode({ apiId, apiHash }, phoneNumber);
+            phoneCodeHash = result.phoneCodeHash;
+            
+            document.getElementById('otp-area').style.display = 'block';
+            alert("OTP Terkirim ke Aplikasi Telegram Anda!");
         }
 
-        async function verifyOTP() {
-            const res = await fetch(`${API}/verify_login`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({otp: document.getElementById('otp').value})
+        async function finishLogin() {
+            const code = document.getElementById('code').value;
+            const phoneNumber = document.getElementById('phone').value;
+            
+            await client.signInUser({ apiId: parseInt(document.getElementById('api_id').value), apiHash: document.getElementById('api_hash').value }, {
+                phoneNumber: phoneNumber,
+                phoneCodeHash: phoneCodeHash,
+                phoneCode: code,
             });
-            const data = await res.json();
-            if(data.status === "success") {
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('chat-section').style.display = 'block';
-                loadChats();
-            } else { alert("Gagal: " + data.msg); }
-        }
 
-        async function loadChats() {
-            const res = await fetch(`${API}/get_chats`);
-            const chats = await res.json();
-            if(chats.status === "unauthorized") return;
-            document.getElementById('chat-list').innerHTML = chats.map(c => 
-                `<div class="chat-item"><span>${c.name}</span> <b>${c.unread}</b></div>`
-            ).join('');
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'block';
+            alert("Login Berhasil Tanpa Termux!");
         }
     </script>
 </body>
