@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TGMODS CLOUD V2</title>
+    <title>TGMODS PURE WEB</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.jsdelivr.net/npm/gramjs/dist/gramjs.min.js"></script>
     <style>
         body { background: #0e1621; color: white; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
-        .card { background: #17212b; padding: 25px; border-radius: 15px; border: 1px solid #31a2f2; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: #31a2f2; }
+        .card { background: #17212b; padding: 25px; border-radius: 15px; border: 1px solid #31a2f2; width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #31a2f2; margin-bottom: 20px; }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #242f3d; color: white; border: 1px solid #333; border-radius: 8px; box-sizing: border-box; }
-        button { background: #31a2f2; color: white; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #2684c7; }
-        .loading { color: #f1c40f; text-align: center; display: none; }
+        button { background: #31a2f2; color: white; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .msg { color: #f1c40f; text-align: center; margin-top: 10px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -26,62 +25,62 @@
             <input type="text" id="code" placeholder="Masukkan Kode dari Telegram">
             <button onclick="finishLogin()">MASUK SEKARANG</button>
         </div>
-        <p id="status" class="loading">Memproses...</p>
+        <div id="status" class="msg"></div>
     </div>
 
-    <div id="chat-area" class="card" style="display:none">
-        <h2 style="color:#2ecc71">✅ BERHASIL MASUK!</h2>
-        <p style="text-align:center">Akun abang sudah terhubung murni lewat browser tanpa Termux.</p>
+    <div id="success-ui" class="card" style="display:none">
+        <h2 style="color:#2ecc71">✅ LOGIN BERHASIL</h2>
+        <p style="text-align:center">Situs sekarang terhubung murni tanpa Termux.</p>
         <button onclick="location.reload()">LOGOUT</button>
     </div>
 
     <script>
-        const { TelegramClient } = window.gramjs;
-        const { StringSession } = window.gramjs.sessions;
         let client;
         let phoneCodeHash;
 
         async function startLogin() {
             const apiId = parseInt(document.getElementById('api_id').value);
             const apiHash = document.getElementById('api_hash').value;
-            const phoneNumber = document.getElementById('phone').value;
+            const phone = document.getElementById('phone').value;
             const status = document.getElementById('status');
 
             try {
-                status.style.display = 'block';
+                // Inisialisasi library GramJS
+                const { TelegramClient } = window.gramjs;
+                const { StringSession } = window.gramjs.sessions;
+                
                 status.innerText = "Menghubungkan ke Telegram...";
-                
                 client = new TelegramClient(new StringSession(""), apiId, apiHash, { connectionRetries: 5 });
-                await client.connect();
                 
-                status.innerText = "Mengirim OTP...";
-                const result = await client.sendCode({ apiId, apiHash }, phoneNumber);
+                await client.connect();
+                status.innerText = "Mengirim Kode OTP...";
+                
+                const result = await client.sendCode({ apiId, apiHash }, phone);
                 phoneCodeHash = result.phoneCodeHash;
                 
                 document.getElementById('otp-area').style.display = 'block';
                 document.getElementById('btn-otp').style.display = 'none';
-                status.innerText = "Cek aplikasi Telegram abang!";
+                status.innerText = "Cek aplikasi Telegram kamu!";
             } catch (err) {
                 alert("Error: " + err.message);
-                status.style.display = 'none';
+                status.innerText = "";
             }
         }
 
         async function finishLogin() {
             const code = document.getElementById('code').value;
-            const phoneNumber = document.getElementById('phone').value;
+            const phone = document.getElementById('phone').value;
             const apiId = parseInt(document.getElementById('api_id').value);
             const apiHash = document.getElementById('api_hash').value;
 
             try {
                 await client.signInUser({ apiId, apiHash }, {
-                    phoneNumber: phoneNumber,
+                    phoneNumber: phone,
                     phoneCodeHash: phoneCodeHash,
                     phoneCode: code,
                 });
-
                 document.getElementById('login-form').style.display = 'none';
-                document.getElementById('chat-area').style.display = 'block';
+                document.getElementById('success-ui').style.display = 'block';
             } catch (err) {
                 alert("Login Gagal: " + err.message);
             }
