@@ -1,57 +1,63 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XTMODEPRO - CLOUD EXECUTOR</title>
+    <title>TGMODS WEB VIP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .terminal-box { border: 2px solid #00ff00; width: 100%; max-width: 450px; padding: 25px; box-shadow: 0 0 20px #00ff00; border-radius: 8px; background: rgba(0,0,0,0.9); text-align: center; }
-        input { width: 100%; background: #111; border: 1px solid #00ff00; color: #fff; padding: 15px; margin: 20px 0; box-sizing: border-box; outline: none; border-radius: 5px; font-size: 14px; }
-        .btn-run { width: 100%; background: #00ff00; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-run:hover { background: #fff; box-shadow: 0 0 20px #fff; }
-        .footer { margin-top: 15px; font-size: 10px; color: #555; }
-        #status { font-size: 11px; margin-top: 10px; color: yellow; min-height: 20px; }
+        body { background: #0e1621; color: white; font-family: sans-serif; margin: 0; }
+        .header { background: #242f3d; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #17212b; }
+        .chat-card { padding: 15px; border-bottom: 1px solid #17212b; display: flex; justify-content: space-between; cursor: pointer; }
+        .chat-card:hover { background: #17212b; }
+        .name { font-weight: bold; color: #64b5f6; }
+        .msg { color: #8b96a3; font-size: 13px; margin-top: 5px; }
+        .unread { background: #31a2f2; color: white; border-radius: 10px; padding: 2px 8px; font-size: 12px; }
+        .btn-spam { background: #e53935; color: white; border: none; padding: 10px; width: 100%; position: fixed; bottom: 0; font-weight: bold; }
     </style>
 </head>
 <body>
-
-<div class="terminal-box">
-    <h2 style="margin:0; font-size: 20px;">XTMODEPRO CLOUD</h2>
-    <p style="font-size: 12px; color: #00ff0088;">AUTOMATED TERMINAL EXECUTOR</p>
-
-    <div id="input-area">
-        <input type="text" id="repoUrl" placeholder="PASTE GITHUB LINK HERE...">
-        <button class="btn-run" onclick="launchTerminal()">LAUNCH SCRIPT</button>
+    <div class="header">
+        <span>☰ TGMODS VIP 👻</span>
+        <span>🔍</span>
+    </div>
+    
+    <div id="chat-container">
+        <p style="text-align: center;">Menghubungkan ke Telegram...</p>
     </div>
 
-    <div id="status">Ready to connect...</div>
-    <div class="footer">POWERED BY GOOGLE CLOUD ENGINE</div>
-</div>
-
-<script>
-    function launchTerminal() {
-        const url = document.getElementById('repoUrl').value;
-        const status = document.getElementById('status');
-        
-        if (!url || !url.includes('github.com')) {
-            alert("Masukkan link GitHub yang valid, Bang!");
-            return;
+    <script>
+        async function loadChats() {
+            const res = await fetch('/get_chats');
+            const data = await res.json();
+            const container = document.getElementById('chat-container');
+            container.innerHTML = '';
+            
+            data.forEach(chat => {
+                container.innerHTML += `
+                    <div class="chat-card" onclick="startSpam(${chat.id}, '${chat.name}')">
+                        <div>
+                            <div class="name">${chat.name} <span style="color:#4caf50">✓✓</span></div>
+                            <div class="msg">${chat.last_msg}</div>
+                        </div>
+                        <div>${chat.unread > 0 ? `<span class="unread">${chat.unread}</span>` : ''}</div>
+                    </div>
+                `;
+            });
         }
 
-        status.innerHTML = "[*] Booting Virtual Machine...<br>[*] Injecting Cloud Shell Parameters...";
-        
-        // LOGIKA INTI: Menggunakan URL Parameter Google Cloud Shell
-        // Ini akan otomatis melakukan git clone dan membuka terminal
-        const cloudShellUrl = "https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=" + encodeURIComponent(url);
-
-        setTimeout(() => {
-            status.innerHTML = "[SUCCESS] Redirecting to Cloud Terminal...";
-            // Membuka terminal di tab baru agar situs Abang tetap terbuka
-            window.open(cloudShellUrl, '_blank');
-        }, 1500);
-    }
-</script>
-
+        async function startSpam(id, name) {
+            let text = prompt(`Kirim Spam ke ${name}:`, "Hacked by TGMODS");
+            let count = prompt("Jumlah:", "10");
+            if (text && count) {
+                alert("Spam Dimulai! Cek Termux untuk status.");
+                await fetch('/spam', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: id, text: text, count: count})
+                });
+                alert("Spam Selesai!");
+            }
+        }
+        loadChats();
+    </script>
 </body>
 </html>
