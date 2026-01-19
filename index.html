@@ -1,37 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TGMODS PURE WEB</title>
+    <title>TGMODS CLOUD V2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.jsdelivr.net/npm/gramjs/dist/gramjs.min.js"></script>
     <style>
-        body { background: #0e1621; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #17212b; padding: 20px; border-radius: 12px; border: 1px solid #31a2f2; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #242f3d; color: white; border: 1px solid #31a2f2; box-sizing: border-box; }
-        button { background: #31a2f2; color: white; border: none; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; }
+        body { background: #0e1621; color: white; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .card { background: #17212b; padding: 25px; border-radius: 15px; border: 1px solid #31a2f2; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #31a2f2; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #242f3d; color: white; border: 1px solid #333; border-radius: 8px; box-sizing: border-box; }
+        button { background: #31a2f2; color: white; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #2684c7; }
+        .loading { color: #f1c40f; text-align: center; display: none; }
     </style>
 </head>
 <body>
     <div id="login-form" class="card">
         <h2>🔥 TGMODS CLOUD</h2>
-        <input type="text" id="api_id" placeholder="API ID (Cek di my.telegram.org)">
-        <input type="text" id="api_hash" placeholder="API HASH">
-        <input type="text" id="phone" placeholder="+628xxx">
-        <button onclick="startLogin()">MASUK KE CLOUD</button>
+        <input type="text" id="api_id" placeholder="API ID" value="36645054">
+        <input type="text" id="api_hash" placeholder="API HASH" value="7ef85cb845a54c1e842cc67b4f127da9">
+        <input type="text" id="phone" placeholder="+628xxx" value="+6287719761698">
+        <button id="btn-otp" onclick="startLogin()">KIRIM KODE OTP</button>
         
         <div id="otp-area" style="display:none">
-            <input type="text" id="code" placeholder="Kode OTP">
-            <button onclick="finishLogin()">KONFIRMASI</button>
+            <input type="text" id="code" placeholder="Masukkan Kode dari Telegram">
+            <button onclick="finishLogin()">MASUK SEKARANG</button>
         </div>
+        <p id="status" class="loading">Memproses...</p>
     </div>
 
     <div id="chat-area" class="card" style="display:none">
-        <h3>✅ Berhasil Masuk!</h3>
-        <p>Sekarang situs ini terhubung langsung ke Telegram tanpa Termux.</p>
-        <div id="list-chats"></div>
+        <h2 style="color:#2ecc71">✅ BERHASIL MASUK!</h2>
+        <p style="text-align:center">Akun abang sudah terhubung murni lewat browser tanpa Termux.</p>
+        <button onclick="location.reload()">LOGOUT</button>
     </div>
 
     <script>
+        const { TelegramClient } = window.gramjs;
+        const { StringSession } = window.gramjs.sessions;
         let client;
         let phoneCodeHash;
 
@@ -39,32 +45,46 @@
             const apiId = parseInt(document.getElementById('api_id').value);
             const apiHash = document.getElementById('api_hash').value;
             const phoneNumber = document.getElementById('phone').value;
+            const status = document.getElementById('status');
 
-            client = new window.gramjs.TelegramClient(new window.gramjs.sessions.StringSession(""), apiId, apiHash, {
-                connectionRetries: 5,
-            });
-
-            await client.connect();
-            const result = await client.sendCode({ apiId, apiHash }, phoneNumber);
-            phoneCodeHash = result.phoneCodeHash;
-            
-            document.getElementById('otp-area').style.display = 'block';
-            alert("OTP Terkirim ke Aplikasi Telegram Anda!");
+            try {
+                status.style.display = 'block';
+                status.innerText = "Menghubungkan ke Telegram...";
+                
+                client = new TelegramClient(new StringSession(""), apiId, apiHash, { connectionRetries: 5 });
+                await client.connect();
+                
+                status.innerText = "Mengirim OTP...";
+                const result = await client.sendCode({ apiId, apiHash }, phoneNumber);
+                phoneCodeHash = result.phoneCodeHash;
+                
+                document.getElementById('otp-area').style.display = 'block';
+                document.getElementById('btn-otp').style.display = 'none';
+                status.innerText = "Cek aplikasi Telegram abang!";
+            } catch (err) {
+                alert("Error: " + err.message);
+                status.style.display = 'none';
+            }
         }
 
         async function finishLogin() {
             const code = document.getElementById('code').value;
             const phoneNumber = document.getElementById('phone').value;
-            
-            await client.signInUser({ apiId: parseInt(document.getElementById('api_id').value), apiHash: document.getElementById('api_hash').value }, {
-                phoneNumber: phoneNumber,
-                phoneCodeHash: phoneCodeHash,
-                phoneCode: code,
-            });
+            const apiId = parseInt(document.getElementById('api_id').value);
+            const apiHash = document.getElementById('api_hash').value;
 
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('chat-area').style.display = 'block';
-            alert("Login Berhasil Tanpa Termux!");
+            try {
+                await client.signInUser({ apiId, apiHash }, {
+                    phoneNumber: phoneNumber,
+                    phoneCodeHash: phoneCodeHash,
+                    phoneCode: code,
+                });
+
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('chat-area').style.display = 'block';
+            } catch (err) {
+                alert("Login Gagal: " + err.message);
+            }
         }
     </script>
 </body>
