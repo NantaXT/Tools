@@ -2,84 +2,53 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XTMODEPRO MOBILE ENGINE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XTMODEPRO MASTER PANEL</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; }
-        #overlay { position: absolute; top: 10px; left: 10px; color: #0f0; font-family: monospace; pointer-events: none; text-shadow: 2px 2px #000; }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid #0f0; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        #log { height: 300px; border: 1px solid #040; overflow-y: auto; margin-bottom: 10px; padding: 10px; background: #050505; }
+        input { background: #000; border: 1px solid #0f0; color: #0f0; width: 100%; padding: 10px; box-sizing: border-box; }
+        .info { color: #0ff; }
     </style>
 </head>
 <body>
-    <div id="overlay">XTMODEPRO SYSTEM V2: ONLINE<br>TAP SCREEN TO SHOOT</div>
-    <div id="crosshair"></div>
+    <div id="log">XTMODEPRO V2 SYSTEM READY...</div>
+    <input type="text" id="cmd" placeholder="Ketik perintah (upload <teks> untuk simpan)">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // ERROR_HANDLING_INIT
-        try {
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            document.body.appendChild(renderer.domElement);
+        const logBox = document.getElementById('log');
+        const cmdInput = document.getElementById('cmd');
+        const GAS_URL = "URL_GOOGLE_SCRIPT_ANDA_DI_SINI"; // GANTI DENGAN URL DEPLOY ANDA
 
-            // Lighting Engine
-            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambient);
-            const point = new THREE.PointLight(0xffffff, 1);
-            point.position.set(5, 5, 5);
-            scene.add(point);
-
-            // Target (Enemy)
-            const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const material = new THREE.MeshStandardMaterial({ color: 0xff0000, wireframe: false });
-            const target = new THREE.Mesh(geometry, material);
-            target.position.z = -5;
-            scene.add(target);
-
-            camera.position.z = 2;
-
-            // XTMODEPRO MOBILE BOT LOGIC
-            const bot = {
-                aim: function() {
-                    target.rotation.x += 0.02;
-                    target.rotation.y += 0.02;
-                }
-            };
-
-            // MOBILE TOUCH HANDLER
-            window.addEventListener('touchstart', (e) => {
-                try {
-                    // Logic: Tembak saat layar disentuh
-                    target.material.color.setHex(0x00ff00);
-                    setTimeout(() => {
-                        target.material.color.setHex(0xff0000);
-                        target.position.x = (Math.random() - 0.5) * 4;
-                        target.position.y = (Math.random() - 0.5) * 4;
-                    }, 100);
-                } catch (err) { console.error("TouchError: " + err); }
-            });
-
-            // RENDER LOOP
-            function animate() {
-                requestAnimationFrame(animate);
-                bot.aim();
-                renderer.render(scene, camera);
+        async function sendData(command, content) {
+            logBox.innerHTML += `<div>[SYSTEM] Sending data to Cloud...</div>`;
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ command: command, content: content })
+                });
+                const result = await response.text();
+                logBox.innerHTML += `<div class="info">[CLOUD] Response: ${result}</div>`;
+            } catch (err) {
+                logBox.innerHTML += `<div style="color:red">[ERROR] Connection Failed: ${err.message}</div>`;
             }
-            animate();
-
-            // RESPONSIVE RESIZE
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-
-        } catch (fatal) {
-            document.getElementById('overlay').innerHTML = "SYSTEM_CRITICAL_ERROR: " + fatal.message;
         }
+
+        cmdInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const val = cmdInput.value;
+                const parts = val.split(' ');
+                
+                if (parts[0] === 'upload') {
+                    const dataToSave = parts.slice(1).join(' ');
+                    await sendData('UPLOAD_DATA', dataToSave);
+                } else {
+                    logBox.innerHTML += `<div>xtmodepro@master:~$ ${val}</div>`;
+                }
+                cmdInput.value = '';
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        });
     </script>
 </body>
 </html>
