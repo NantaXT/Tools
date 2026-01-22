@@ -1,58 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>XT-MOD PRO DASHBOARD</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XTMODEPRO MOBILE ENGINE</title>
     <style>
-        body { background: #0d1117; color: #58a6ff; font-family: 'Segoe UI', sans-serif; padding: 20px; }
-        #log-container { background: #161b22; border: 1px solid #30363d; height: 350px; overflow-y: auto; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .log-entry { border-bottom: 1px solid #21262d; padding: 5px 0; font-size: 14px; }
-        .user { color: #7ee787; font-weight: bold; }
-        .input-group { background: #161b22; padding: 20px; border-radius: 8px; border: 1px solid #30363d; }
-        input { background: #0d1117; border: 1px solid #30363d; color: white; padding: 10px; width: 100%; margin-bottom: 10px; border-radius: 5px; }
-        button { background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
-        button:hover { background: #2ea043; }
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; }
+        #overlay { position: absolute; top: 10px; left: 10px; color: #0f0; font-family: monospace; pointer-events: none; text-shadow: 2px 2px #000; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid #0f0; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
     </style>
 </head>
 <body>
-    <h2>🚀 LOG CHAT & BALAS PESAN</h2>
-    
-    <div id="log-container">
-        <div class="log-entry">Menunggu pesan masuk dari Termux...</div>
-    </div>
+    <div id="overlay">XTMODEPRO SYSTEM V2: ONLINE<br>TAP SCREEN TO SHOOT</div>
+    <div id="crosshair"></div>
 
-    <div class="input-group">
-        <label>ID Tujuan (Chat ID):</label>
-        <input type="text" id="target_id" placeholder="Contoh: 8036169071">
-        
-        <label>Pesan Balasan:</label>
-        <input type="text" id="pesan_teks" placeholder="Ketik pesan di sini...">
-        
-        <button onclick="kirimKeTelegram()">KIRIM BALASAN</button>
-    </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const BOT_TOKEN = "8351762083:AAFsFOuRfTl1dGt6SBpKjeja2ZPlyakxOwg";
+        // ERROR_HANDLING_INIT
+        try {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
 
-        function kirimKeTelegram() {
-            const id = document.getElementById('target_id').value;
-            const msg = document.getElementById('pesan_teks').value;
+            // Lighting Engine
+            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambient);
+            const point = new THREE.PointLight(0xffffff, 1);
+            point.position.set(5, 5, 5);
+            scene.add(point);
 
-            if(!id || !msg) return alert("Isi ID dan Pesan!");
+            // Target (Enemy)
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({ color: 0xff0000, wireframe: false });
+            const target = new THREE.Mesh(geometry, material);
+            target.position.z = -5;
+            scene.add(target);
 
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: id, text: msg })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.ok) {
-                    alert("Pesan Berhasil Terkirim!");
-                    document.getElementById('pesan_teks').value = "";
-                } else {
-                    alert("Gagal: " + data.description);
+            camera.position.z = 2;
+
+            // XTMODEPRO MOBILE BOT LOGIC
+            const bot = {
+                aim: function() {
+                    target.rotation.x += 0.02;
+                    target.rotation.y += 0.02;
                 }
+            };
+
+            // MOBILE TOUCH HANDLER
+            window.addEventListener('touchstart', (e) => {
+                try {
+                    // Logic: Tembak saat layar disentuh
+                    target.material.color.setHex(0x00ff00);
+                    setTimeout(() => {
+                        target.material.color.setHex(0xff0000);
+                        target.position.x = (Math.random() - 0.5) * 4;
+                        target.position.y = (Math.random() - 0.5) * 4;
+                    }, 100);
+                } catch (err) { console.error("TouchError: " + err); }
             });
+
+            // RENDER LOOP
+            function animate() {
+                requestAnimationFrame(animate);
+                bot.aim();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // RESPONSIVE RESIZE
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+        } catch (fatal) {
+            document.getElementById('overlay').innerHTML = "SYSTEM_CRITICAL_ERROR: " + fatal.message;
         }
     </script>
 </body>
