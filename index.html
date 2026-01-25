@@ -1,54 +1,73 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XTMODEPRO MASTER PANEL</title>
+    <title>TERMUX XT-MODEPRO</title>
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
-        #log { height: 300px; border: 1px solid #040; overflow-y: auto; margin-bottom: 10px; padding: 10px; background: #050505; }
-        input { background: #000; border: 1px solid #0f0; color: #0f0; width: 100%; padding: 10px; box-sizing: border-box; }
-        .info { color: #0ff; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; margin: 0; padding: 10px; }
+        #output { height: 80vh; overflow-y: auto; white-space: pre-wrap; margin-bottom: 10px; }
+        .line { display: flex; }
+        input { background: transparent; border: none; color: #0f0; outline: none; flex: 1; font-family: inherit; font-size: 16px; }
+        .prompt { color: #00ff00; }
     </style>
 </head>
 <body>
-    <div id="log">XTMODEPRO V2 SYSTEM READY...</div>
-    <input type="text" id="cmd" placeholder="Ketik perintah (upload <teks> untuk simpan)">
+    <div id="output">XT-TERMUX FULL MODULE v1.0
+Logged in as: root@xtmodepro
+Type 'read' to access memory file.</div>
+    
+    <div class="line">
+        <span class="prompt">~ $ </span>
+        <input type="text" id="input" autofocus>
+    </div>
+
+    <input type="file" id="memori" style="display:none">
 
     <script>
-        const logBox = document.getElementById('log');
-        const cmdInput = document.getElementById('cmd');
-        const GAS_URL = "URL_GOOGLE_SCRIPT_ANDA_DI_SINI"; // GANTI DENGAN URL DEPLOY ANDA
+        const urlGAS = "URL_WEB_APP_GOOGLE_SCRIPT_ANDA";
+        const input = document.getElementById('input');
+        const output = document.getElementById('output');
+        const fileInput = document.getElementById('memori');
 
-        async function sendData(command, content) {
-            logBox.innerHTML += `<div>[SYSTEM] Sending data to Cloud...</div>`;
-            try {
-                const response = await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ command: command, content: content })
-                });
-                const result = await response.text();
-                logBox.innerHTML += `<div class="info">[CLOUD] Response: ${result}</div>`;
-            } catch (err) {
-                logBox.innerHTML += `<div style="color:red">[ERROR] Connection Failed: ${err.message}</div>`;
-            }
-        }
-
-        cmdInput.addEventListener('keydown', async (e) => {
+        input.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
-                const val = cmdInput.value;
-                const parts = val.split(' ');
-                
-                if (parts[0] === 'upload') {
-                    const dataToSave = parts.slice(1).join(' ');
-                    await sendData('UPLOAD_DATA', dataToSave);
+                const cmd = input.value;
+                print("~ $ " + cmd);
+                input.value = "";
+
+                if (cmd === "read") {
+                    fileInput.click(); // Langsung buka memori
+                } else if (cmd === "clear") {
+                    output.innerHTML = "";
                 } else {
-                    logBox.innerHTML += `<div>xtmodepro@master:~$ ${val}</div>`;
+                    print("Processing command...");
                 }
-                cmdInput.value = '';
-                logBox.scrollTop = logBox.scrollHeight;
             }
         });
+
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            const reader = new FileReader();
+            reader.onload = function() {
+                const content = reader.result;
+                print("[READING MEMORY] " + file.name);
+                
+                // Kirim data ke Google Script
+                fetch(urlGAS, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: "action=run_script&code=" + encodeURIComponent(content)
+                }).then(() => {
+                    print("Script sent to GAS Backend successfully.");
+                });
+            };
+            reader.readAsText(file);
+        });
+
+        function print(text) {
+            output.innerHTML += "\n" + text;
+            output.scrollTop = output.scrollHeight;
+        }
     </script>
 </body>
 </html>
